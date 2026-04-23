@@ -1,6 +1,7 @@
 #Paste everything from other files
 import random
 import copy
+import pandas as pd
 
 CARD_VALUES = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
@@ -22,8 +23,6 @@ class Shoe:
             print("Reshuffling shoe...")
             self.build_shoe()
         return self.cards.pop()
-
-
 class Hand:
     def __init__(self):
         self.cards = []
@@ -46,7 +45,6 @@ class Hand:
 
     def __str__(self):
         return f"{self.cards} (value: {self.get_value()})"
-
 
 def dealer_play(shoe, dealer_hand):
     while dealer_hand.get_value() < 17:
@@ -153,7 +151,6 @@ def play_blackjack():
         if again != "Y":
             break
 
-
 def simulate(num_hands=100000):
     shoe = Shoe()
     results = {}
@@ -217,10 +214,48 @@ def print_table(results):
             f"{row['Net']:>3}"
         )
 
+def generate_results_table(num_hands=10):
+    shoe = Shoe()
+    data_results = []
+
+    headers = [
+        'player_hand_org',
+        'dealer_hand_org',
+        'player_choice',
+        'player_hand',
+        'dealer_hand',
+        'player_bets',
+        'outcome'
+    ]
+
+    for _ in range(num_hands):
+        (
+            player_hand_org,
+            dealer_hand_org,
+            player_choice,
+            player_hand,
+            dealer_hand,
+            player_bets,
+            outcome
+        ) = start_game(shoe, random.choice(["H", "S"]))
+
+        data_results.append([
+            player_hand_org.cards,
+            dealer_hand_org.cards,
+            player_choice,
+            player_hand.cards,
+            dealer_hand.cards,
+            player_bets,
+            outcome
+        ])
+
+    df = pd.DataFrame(data_results, columns=headers)
+    return df
 
 if __name__ == "__main__":
     print("1 = Play game")
     print("2 = Run simulation")
+    print("3 = Show pandas results table")
 
     choice = input("Choose: ")
 
@@ -229,5 +264,8 @@ if __name__ == "__main__":
     elif choice == "2":
         results = simulate(100000)
         print_table(results)
+    elif choice == "3":
+        blackjack_df = generate_results_table(10)
+        print(blackjack_df)
     else:
         print("Invalid choice.")
