@@ -1,91 +1,79 @@
-def dealer_play(shoe, dealer_hand):
-
-    while dealer_hand.get_value() < 17:
-        dealer_hand.add_card(shoe.deal_card())
-
-
-def resolve_hand(shoe, player_hand, dealer_hand):
-
-    if player_hand.is_bust():
-        return -1
-
-    dealer_play(shoe, dealer_hand)
-
-    if dealer_hand.is_bust():
-        return 1
-
-    if player_hand.get_value() > dealer_hand.get_value():
-        return 1
-
-    elif player_hand.get_value() < dealer_hand.get_value():
-        return -1
-
-    else:
-        return 0
-
-
 def simulate(num_hands=100000):
-
     shoe = Shoe()
-
     results = {}
 
     for _ in range(num_hands):
-
         player = Hand()
         dealer = Hand()
 
         player.add_card(shoe.deal_card())
-        dealer.add_card(shoe.deal_card())
-
         player.add_card(shoe.deal_card())
+        dealer.add_card(shoe.deal_card())
         dealer.add_card(shoe.deal_card())
 
         player_start = player.get_value()
-
-        dealer_upcard = dealer.cards[0].value
+        dealer_upcard = dealer.cards[0]   # string like 'K', '7', etc.
 
         action = random.choice(["HIT", "STAND"])
 
         if action == "HIT":
             player.add_card(shoe.deal_card())
 
-        result = resolve_hand(shoe, player, dealer)
+        outcome_value, outcome_name = resolve_simulated_hand(shoe, player, dealer)
 
         key = (player_start, dealer_upcard, action)
 
         if key not in results:
-            results[key] = 0
+            results[key] = {
+                "Wins": 0,
+                "Losses": 0,
+                "Draws": 0,
+                "Net": 0
+            }
 
-        results[key] += result
+        if outcome_value == 1:
+            results[key]["Wins"] += 1
+        elif outcome_value == -1:
+            results[key]["Losses"] += 1
+        else:
+            results[key]["Draws"] += 1
+
+        results[key]["Net"] += outcome_value
 
     return results
 
 
-def print_table(results):
+def resolve_simulated_hand(shoe, player_hand, dealer_hand):
+    if player_hand.is_bust():
+        return -1, "Loss"
 
-    print("\nPLAYER | DEALER | ACTION | NET RESULT")
-    print("--------------------------------------")
+    while dealer_hand.get_value() < 17:
+        dealer_hand.add_card(shoe.deal_card())
+
+    if dealer_hand.is_bust():
+        return 1, "Win"
+
+    if player_hand.get_value() > dealer_hand.get_value():
+        return 1, "Win"
+    elif player_hand.get_value() < dealer_hand.get_value():
+        return -1, "Loss"
+    else:
+        return 0, "Draw"
+
+
+def print_table(results):
+    print("\nPLAYER | DEALER | ACTION | WINS | LOSSES | DRAWS | NET")
+    print("--------------------------------------------------------")
 
     for key in sorted(results):
-
-        p, d, a = key
-
-        print(p, d, a, results[key])
-
-
-if __name__ == "__main__":
-
-    print("1 = Play game")
-    print("2 = Run simulation")
-
-    choice = input("Choose: ")
-
-    if choice == "1":
-        play_blackjack()
-
-    else:
-
-        results = simulate(100000)
-
-        print_table(results)
+        player_start, dealer_upcard, action = key
+        row = results[key]
+        print(
+            f"{player_start:>6} | "
+            f"{dealer_upcard:>6} | "
+            f"{action:>6} | "
+            f"{row['Wins']:>4} | "
+            f"{row['Losses']:>6} | "
+            f"{row['Draws']:>5} | "
+            f"{row['Net']:>3}"
+        )
