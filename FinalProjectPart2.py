@@ -17,8 +17,8 @@ def start_game(shoe):
     dealer_hand_org = copy.deepcopy(dealer_hand)
 
     # both of the player's cards and first of the dealer's cards is made visible
-    print("Player Hand :", player_hand.cards)
-    print("Dealer Hand :", dealer_hand.cards[0])
+    #print("Player Hand :", player_hand.cards)
+    #print("Dealer Hand :", dealer_hand.cards[0])
 
     player_choice = ""
     player_bets = 0
@@ -30,9 +30,10 @@ def start_game(shoe):
 
         if player_choice == "H":
             player_hand.add_card(shoe.deal_card())
-            print("Player Hand :", player_hand.cards)
+            #print("Player Hand :", player_hand.cards)
         elif player_choice == "S":
-            print("Player chooses to stand")
+            pass
+            #print("Player chooses to stand")
 
     player_hand, dealer_hand, player_bets, outcome = play_game(shoe, player_hand, dealer_hand, player_bets)
 
@@ -41,34 +42,34 @@ def start_game(shoe):
 def play_game(shoe, player_hand, dealer_hand, player_bets):
 
     if player_hand.is_bust():
-        print("Player busted, Dealer Wins!")
+        #print("Player busted, Dealer Wins!")
         player_bets -= 1
         outcome = "Loss"
         return player_hand, dealer_hand, player_bets, outcome
 
     # dealer's turn to play, they must hit till they reach a value of at least 17 and then they stand
-    print("Dealer Hand :", dealer_hand.cards)
+    #print("Dealer Hand :", dealer_hand.cards)
     while dealer_hand.get_value() < 17:
         dealer_hand.add_card(shoe.deal_card())
-        print("Dealer Hand :", dealer_hand.cards)
+        #print("Dealer Hand :", dealer_hand.cards)
 
     if dealer_hand.is_bust():
-        print("Dealer busted, Player Wins!")
+        #print("Dealer busted, Player Wins!")
         player_bets += 1
         outcome = "Win"
         return player_hand, dealer_hand, player_bets, outcome
 
     # if neither dealer nor player are busted, compare the card values
     if player_hand.get_value() > dealer_hand.get_value():
-        print("Player Wins!")
+        #print("Player Wins!")
         player_bets += 1
         outcome = "Win"
     elif player_hand.get_value() < dealer_hand.get_value():
-        print("Dealer Wins!")
+        #print("Dealer Wins!")
         player_bets -= 1
         outcome = "Loss"
     else:
-        print("Draw!")
+        #print("Draw!")
         outcome = "Draw"
 
     return player_hand, dealer_hand, player_bets, outcome
