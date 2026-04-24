@@ -8,6 +8,12 @@ CARD_VALUES = {
     '7': 7, '8': 8, '9': 9,
     '10': 10, 'J': 10, 'Q': 10, 'K': 10, 'A': 11
 }
+def print_banner():
+    print("\n==============================")
+    print("     BLACKJACK SIMULATOR")
+    print("         (Target: 21)")
+    print("==============================")
+    
 class Shoe:
     def __init__(self, num_decks=6):
         self.num_decks = num_decks
