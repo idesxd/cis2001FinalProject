@@ -1,21 +1,21 @@
-#Paste everything from other files
+import pandas as pd
 import random
 import copy
-import pandas as pd
+
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1000)
+pd.set_option('display.max_colwidth', None)
+pd.set_option('display.max_rows', None)
 
 CARD_VALUES = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6,
     '7': 7, '8': 8, '9': 9,
     '10': 10, 'J': 10, 'Q': 10, 'K': 10, 'A': 11
 }
-def print_banner():
-    print("\n==============================")
-    print("     BLACKJACK SIMULATOR")
-    print("         (Target: 21)")
-    print("==============================")
-    
+
 class Shoe:
     def __init__(self, num_decks=6):
+        self.cards = None
         self.num_decks = num_decks
         self.build_shoe()
 
@@ -29,6 +29,8 @@ class Shoe:
             print("Reshuffling shoe...")
             self.build_shoe()
         return self.cards.pop()
+
+
 class Hand:
     def __init__(self):
         self.cards = []
@@ -37,10 +39,11 @@ class Hand:
         self.cards.append(card)
 
     def get_value(self):
-        value = sum(CARD_VALUES[card] for card in self.cards)
+        value = sum(CARD_VALUES[c] for c in self.cards)
         aces = self.cards.count('A')
 
-        while value > 21 and aces > 0:
+        #CITATION, UMGPT: How do I adjust for aces
+        while value > 21 and aces:
             value -= 10
             aces -= 1
 
@@ -49,202 +52,95 @@ class Hand:
     def is_bust(self):
         return self.get_value() > 21
 
-    def __str__(self):
-        return f"{self.cards} (value: {self.get_value()})"
 
-def dealer_play(shoe, dealer_hand):
-    while dealer_hand.get_value() < 17:
-        dealer_hand.add_card(shoe.deal_card())
-
-
-def resolve_hand(shoe, player_hand, dealer_hand):
-    if player_hand.is_bust():
-        return -1, "Loss"
-
-    dealer_play(shoe, dealer_hand)
-
-    if dealer_hand.is_bust():
-        return 1, "Win"
-
-    if player_hand.get_value() > dealer_hand.get_value():
-        return 1, "Win"
-    elif player_hand.get_value() < dealer_hand.get_value():
-        return -1, "Loss"
-    else:
-        return 0, "Draw"
-
-
-def play_game(shoe, player_hand, dealer_hand, player_bets):
-    result_value, outcome = resolve_hand(shoe, player_hand, dealer_hand)
-    player_bets += result_value
-    return player_hand, dealer_hand, player_bets, outcome
-
-
-def start_game(shoe, player_choice=None):
+def start_game(shoe, option):
     if len(shoe.cards) < 100:
         shoe.build_shoe()
-
     player_hand = Hand()
     dealer_hand = Hand()
 
+    # 1. Initial dealing of two cards each for the dealer and player
     player_hand.add_card(shoe.deal_card())
     player_hand.add_card(shoe.deal_card())
     dealer_hand.add_card(shoe.deal_card())
     dealer_hand.add_card(shoe.deal_card())
-
     player_hand_org = copy.deepcopy(player_hand)
     dealer_hand_org = copy.deepcopy(dealer_hand)
 
+    # both of the player's cards and first of the dealer's cards is made visible
+    #print("Player Hand :", player_hand.cards)
+    #print("Dealer Hand :", dealer_hand.cards[0])
+
+    player_choice = ""
     player_bets = 0
 
+    # player's turn to play, they can choose to either stand or hit once
     if not player_hand.is_bust():
-        if player_choice is None:
-            player_choice = input("Enter H to hit or S to stand: ").upper()
-        else:
-            player_choice = player_choice.upper()
+        if option == "player":
+            print("Player Hand :", player_hand.cards)
+            print("Dealer's First Card :", dealer_hand.cards[0])
+            player_choice = input("Enter H to hit and S to stand :").upper()
+        elif option == "sim":
+            player_choice = random.choice(['H', 'S'])
 
         if player_choice == "H":
             player_hand.add_card(shoe.deal_card())
         elif player_choice == "S":
             pass
-        else:
-            print("Invalid choice. Standing by default.")
-            player_choice = "S"
 
-    player_hand, dealer_hand, player_bets, outcome = play_game(
-        shoe, player_hand, dealer_hand, player_bets
-    )
+    player_hand, dealer_hand, player_bets, outcome = play_game(shoe, player_hand, dealer_hand, player_bets)
+    if option == "player":
+        print("Player Outcome :", outcome)
+    elif option == "sim":
+        pass
 
-    return (
-        player_hand_org,
-        dealer_hand_org,
-        player_choice,
-        player_hand,
-        dealer_hand,
-        player_bets,
-        outcome
-    )
+    return player_hand_org, dealer_hand_org, player_choice, player_hand, dealer_hand, player_bets, outcome
 
 
-def play_blackjack():
-    shoe = Shoe()
-    total_money = 0
+def play_game(shoe, player_hand, dealer_hand, player_bets):
 
-    while True:
-        print("\n--- New Hand ---")
+    if player_hand.is_bust():
+        #print("Player busted, Dealer Wins!")
+        player_bets -= 1
+        outcome = "Loss"
+        return player_hand, dealer_hand, player_bets, outcome
 
-        (
-            player_start,
-            dealer_start,
-            choice,
-            final_player,
-            final_dealer,
-            hand_result,
-            outcome
-        ) = start_game(shoe)
+    # dealer's turn to play, they must hit till they reach a value of at least 17 and then they stand
+    #print("Dealer Hand :", dealer_hand.cards)
+    while dealer_hand.get_value() < 17:
+        dealer_hand.add_card(shoe.deal_card())
+        #print("Dealer Hand :", dealer_hand.cards)
 
-        total_money += hand_result
+    if dealer_hand.is_bust():
+        #print("Dealer busted, Player Wins!")
+        player_bets += 1
+        outcome = "Win"
+        return player_hand, dealer_hand, player_bets, outcome
 
-        print("Player starting hand:", player_start)
-        print("Dealer showing:", dealer_start.cards[0])
-        print("Player choice:", choice)
-        print("Final player hand:", final_player)
-        print("Final dealer hand:", final_dealer)
-        print("Outcome:", outcome)
-        print("Running total: $", total_money)
+    # if neither dealer nor player are busted, compare the card values
+    if player_hand.get_value() > dealer_hand.get_value():
+        #print("Player Wins!")
+        player_bets += 1
+        outcome = "Win"
+    elif player_hand.get_value() < dealer_hand.get_value():
+        #print("Dealer Wins!")
+        player_bets -= 1
+        outcome = "Loss"
+    else:
+        #print("Draw!")
+        outcome = "Draw"
 
-        again = input("Play again? (Y/N): ").upper()
-        if again != "Y":
-            break
-
-def simulate(num_hands=100000):
-    shoe = Shoe()
-    results = {}
-
-    for _ in range(num_hands):
-        player = Hand()
-        dealer = Hand()
-
-        player.add_card(shoe.deal_card())
-        player.add_card(shoe.deal_card())
-        dealer.add_card(shoe.deal_card())
-        dealer.add_card(shoe.deal_card())
-
-        player_start = player.get_value()
-        dealer_upcard = dealer.cards[0]
-
-        action = random.choice(["HIT", "STAND"])
-
-        if action == "HIT":
-            player.add_card(shoe.deal_card())
-
-        result_value, _ = resolve_hand(shoe, player, dealer)
-
-        key = (player_start, dealer_upcard, action)
-
-        if key not in results:
-            results[key] = {
-                "Wins": 0,
-                "Losses": 0,
-                "Draws": 0,
-                "Net": 0
-            }
-
-        if result_value == 1:
-            results[key]["Wins"] += 1
-        elif result_value == -1:
-            results[key]["Losses"] += 1
-        else:
-            results[key]["Draws"] += 1
-
-        results[key]["Net"] += result_value
-
-    return results
+    return player_hand, dealer_hand, player_bets, outcome
 
 
-def print_table(results):
-    print("\nPLAYER | DEALER | ACTION | WINS | LOSSES | DRAWS | NET")
-    print("--------------------------------------------------------")
-
-    for key in sorted(results):
-        player_start, dealer_upcard, action = key
-        row = results[key]
-
-        print(
-            f"{player_start:>6} | "
-            f"{dealer_upcard:>6} | "
-            f"{action:>6} | "
-            f"{row['Wins']:>4} | "
-            f"{row['Losses']:>6} | "
-            f"{row['Draws']:>5} | "
-            f"{row['Net']:>3}"
-        )
-
-def generate_results_table(num_hands=10):
-    shoe = Shoe()
+def sim_blackjack(sim_hands, option = "sim", shoe = None):
+    if shoe is None:
+        shoe = Shoe()
     data_results = []
+    table_headers = ['player_hand_org', 'dealer_hand_org', 'player_choice', 'player_hand', 'dealer_hand', 'player_bets', 'outcome']
 
-    headers = [
-        'player_hand_org',
-        'dealer_hand_org',
-        'player_choice',
-        'player_hand',
-        'dealer_hand',
-        'player_bets',
-        'outcome'
-    ]
-
-    for _ in range(num_hands):
-        (
-            player_hand_org,
-            dealer_hand_org,
-            player_choice,
-            player_hand,
-            dealer_hand,
-            player_bets,
-            outcome
-        ) = start_game(shoe, random.choice(["H", "S"]))
-
+    for hands in range(sim_hands):
+        player_hand_org, dealer_hand_org, player_choice, player_hand, dealer_hand, player_bets, outcome = start_game(shoe, option)
         data_results.append([
             player_hand_org.cards,
             dealer_hand_org.cards,
@@ -255,23 +151,36 @@ def generate_results_table(num_hands=10):
             outcome
         ])
 
-    df = pd.DataFrame(data_results, columns=headers)
-    return df
+    results_table = pd.DataFrame(data_results, columns = table_headers)
+
+    return results_table
+
 
 if __name__ == "__main__":
-    print("1 = Play game")
-    print("2 = Run simulation")
-    print("3 = Show pandas results table")
+    class_shoe = Shoe()
 
-    choice = input("Choose: ")
+    while True:  # This loop allows the game to ask again after each turn
+        print("\n--- Blackjack Menu ---")
+        print("1 = Play game (1 Round)")
+        print("2 = Run simulation (5 Rounds)")
+        print("Q = Quit")
 
-    if choice == "1":
-        play_blackjack()
-    elif choice == "2":
-        results = simulate(100000)
-        print_table(results)
-    elif choice == "3":
-        blackjack_df = generate_results_table(10)
-        print(blackjack_df)
-    else:
-        print("Invalid choice.")
+        choice = input("Choose: ").strip().upper()
+
+        if choice == "1":
+            # Changed sim_hands to 1 so it plays exactly one turn then returns here
+            blackjack_df = sim_blackjack(1, "player", class_shoe)
+            print("\n--- Round Results ---")
+            print(blackjack_df)
+
+        elif choice == "2":
+            blackjack_df = sim_blackjack(100000, "sim", class_shoe)
+            print("\n--- Simulation Results ---")
+            print(blackjack_df)
+
+        elif choice == "Q":
+            print("Thanks for playing!")
+            break  # Now this break is inside a loop, so it works perfectly
+
+        else:
+            print("Invalid choice. Please try again.")
