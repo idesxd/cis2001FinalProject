@@ -182,7 +182,7 @@ if __name__ == "__main__":
             print(blackjack_df)
 
         elif choice == "2":
-            blackjack_df = sim_blackjack(5, "sim", class_shoe)
+            blackjack_df = sim_blackjack(100000, "sim", class_shoe)
             print("\n--- Simulation Results ---")
             print(blackjack_df)
 
