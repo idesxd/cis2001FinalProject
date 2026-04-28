@@ -4,6 +4,12 @@ CIS 2001 Final Project
 RUBRIC:
 Team eval: 10/10
 Git commit history of 10+ commits over 10+ days: 10/10
+
+
 Part 2 - game play manually: 10/10
+<img width="3822" height="2159" alt="image" src="https://github.com/user-attachments/assets/26ceff49-0d50-4e6f-b151-41ea32412f14" />
+
 Part 3 - 100,000 hand simulation and results table: 10/10
+<img width="3839" height="2159" alt="image" src="https://github.com/user-attachments/assets/e85d5a52-874f-4398-9e7e-f87efbb4ba62" />
+
 TOTAL POINTS: 40/40
