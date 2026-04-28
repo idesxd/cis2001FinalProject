@@ -26,7 +26,7 @@ class Shoe:
 
     def deal_card(self):
         if len(self.cards) < 100:
-            print("Reshuffling shoe...")
+            #print("Reshuffling shoe...")
             self.build_shoe()
         return self.cards.pop()
 
@@ -54,8 +54,6 @@ class Hand:
 
 
 def start_game(shoe, option):
-    if len(shoe.cards) < 100:
-        shoe.build_shoe()
     player_hand = Hand()
     dealer_hand = Hand()
 
@@ -64,38 +62,35 @@ def start_game(shoe, option):
     player_hand.add_card(shoe.deal_card())
     dealer_hand.add_card(shoe.deal_card())
     dealer_hand.add_card(shoe.deal_card())
-    player_hand_org = copy.deepcopy(player_hand)
-    dealer_hand_org = copy.deepcopy(dealer_hand)
-
-    # both of the player's cards and first of the dealer's cards is made visible
-    #print("Player Hand :", player_hand.cards)
-    #print("Dealer Hand :", dealer_hand.cards[0])
+    player_hand_org = player_hand.cards[:]
+    dealer_hand_org = dealer_hand.cards[:]
 
     player_choice = ""
     player_bets = 0
+    outcome = ""
 
     # player's turn to play, they can choose to either stand or hit once
     if not player_hand.is_bust():
         if option == "player":
+            # both of the player's cards and first of the dealer's cards is made visible
             print("Player Hand :", player_hand.cards)
             print("Dealer's First Card :", dealer_hand.cards[0])
             player_choice = input("Enter H to hit and S to stand :").upper()
+            player_hand, dealer_hand, player_bets, outcome = player_choice_play(shoe, player_hand, dealer_hand, player_bets, player_choice)
+            print("Player Outcome :", outcome)
         elif option == "sim":
             player_choice = random.choice(['H', 'S'])
-
-        if player_choice == "H":
-            player_hand.add_card(shoe.deal_card())
-        elif player_choice == "S":
-            pass
-
-    player_hand, dealer_hand, player_bets, outcome = play_game(shoe, player_hand, dealer_hand, player_bets)
-    if option == "player":
-        print("Player Outcome :", outcome)
-    elif option == "sim":
-        pass
+            player_hand, dealer_hand, player_bets, outcome = player_choice_play(shoe, player_hand, dealer_hand, player_bets, player_choice)
 
     return player_hand_org, dealer_hand_org, player_choice, player_hand, dealer_hand, player_bets, outcome
 
+def player_choice_play(shoe, player_hand, dealer_hand, player_bets, player_choice):
+    if player_choice == "H":
+        player_hand.add_card(shoe.deal_card())
+    elif player_choice == "S":
+        pass
+    player_hand, dealer_hand, player_bets, outcome = play_game(shoe, player_hand, dealer_hand, player_bets)
+    return player_hand, dealer_hand, player_bets, outcome
 
 def play_game(shoe, player_hand, dealer_hand, player_bets):
 
@@ -142,8 +137,8 @@ def sim_blackjack(sim_hands, option = "sim", shoe = None):
     for hands in range(sim_hands):
         player_hand_org, dealer_hand_org, player_choice, player_hand, dealer_hand, player_bets, outcome = start_game(shoe, option)
         data_results.append([
-            player_hand_org.cards,
-            dealer_hand_org.cards,
+            player_hand_org,
+            dealer_hand_org,
             player_choice,
             player_hand.cards,
             dealer_hand.cards,
@@ -158,17 +153,17 @@ def sim_blackjack(sim_hands, option = "sim", shoe = None):
 
 if __name__ == "__main__":
     class_shoe = Shoe()
+    print("Gambling Problem? Call or text 1-800-GAMBLER")
 
-    while True:  # This loop allows the game to ask again after each turn
+    while True:
         print("\n--- Blackjack Menu ---")
-        print("1 = Play game (1 Round)")
-        print("2 = Run simulation (5 Rounds)")
+        print("1 = Play game")
+        print("2 = Run simulation")
         print("Q = Quit")
 
         choice = input("Choose: ").strip().upper()
 
         if choice == "1":
-            # Changed sim_hands to 1 so it plays exactly one turn then returns here
             blackjack_df = sim_blackjack(1, "player", class_shoe)
             print("\n--- Round Results ---")
             print(blackjack_df)
@@ -180,7 +175,7 @@ if __name__ == "__main__":
 
         elif choice == "Q":
             print("Thanks for playing!")
-            break  # Now this break is inside a loop, so it works perfectly
+            break
 
         else:
             print("Invalid choice. Please try again.")
